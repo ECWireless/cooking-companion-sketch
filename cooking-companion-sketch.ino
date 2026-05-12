@@ -350,7 +350,11 @@ void setStatus(int status) {
       break;
     case STATUS_RECORDING:
     case STATUS_THINKING:
+      setSolidYellow();
+      break;
     case STATUS_PLAYING:
+      setSolidBlue();
+      break;
     default:
       // Animated states are handled by updateStatusLed().
       break;
