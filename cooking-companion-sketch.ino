@@ -27,6 +27,9 @@ const char* GATEWAY_TOKEN = "";
 // session ids, temporary audio URLs, and API response bodies.
 const bool DEBUG_VERBOSE_API = false;
 
+// Keep false during normal countertop use. Enable while tuning latency/audio.
+const bool DEBUG_TIMING = false;
+
 // Stored after successful API responses.
 String sessionId = "";
 
@@ -792,14 +795,16 @@ void recordWhileTalkHeld() {
   if (samplesRecorded > 0) {
     int avgLevel = totalAbs / samplesRecorded;
 
-    Serial.print("Avg level before upload process: ");
-    Serial.println(avgLevel);
+    if (DEBUG_TIMING) {
+      Serial.print("Avg level before upload process: ");
+      Serial.println(avgLevel);
 
-    Serial.print("Min sample before upload process: ");
-    Serial.println(minSample);
+      Serial.print("Min sample before upload process: ");
+      Serial.println(minSample);
 
-    Serial.print("Max sample before upload process: ");
-    Serial.println(maxSample);
+      Serial.print("Max sample before upload process: ");
+      Serial.println(maxSample);
+    }
 
     unsigned long processStartMs = millis();
 
@@ -811,14 +816,16 @@ void recordWhileTalkHeld() {
 
     unsigned long wavEndMs = millis();
 
-    Serial.print("TIMING process PCM ms: ");
-    Serial.println(processEndMs - processStartMs);
+    if (DEBUG_TIMING) {
+      Serial.print("TIMING process PCM ms: ");
+      Serial.println(processEndMs - processStartMs);
 
-    Serial.print("TIMING build WAV ms: ");
-    Serial.println(wavEndMs - processEndMs);
+      Serial.print("TIMING build WAV ms: ");
+      Serial.println(wavEndMs - processEndMs);
 
-    Serial.print("TIMING record+process+wav total ms: ");
-    Serial.println(wavEndMs - startMs);
+      Serial.print("TIMING record+process+wav total ms: ");
+      Serial.println(wavEndMs - startMs);
+    }
   } else {
     Serial.println("No samples recorded.");
   }
@@ -1000,6 +1007,8 @@ bool looksLikeMp3(const uint8_t* data, size_t len) {
 }
 
 void printFirstBytes(const uint8_t* data, size_t len) {
+  if (!DEBUG_TIMING) return;
+
   Serial.println("First 32 bytes:");
 
   size_t n = min((size_t)32, len);
@@ -1121,8 +1130,10 @@ bool downloadMp3ToMemory(const String& fullUrl) {
 
   mp3Size = totalRead;
 
-  Serial.print("Downloaded MP3 bytes: ");
-  Serial.println(mp3Size);
+  if (DEBUG_TIMING) {
+    Serial.print("Downloaded MP3 bytes: ");
+    Serial.println(mp3Size);
+  }
 
   if (mp3Size == 0) {
     Serial.println("MP3 download failed: zero bytes.");
@@ -1147,8 +1158,10 @@ bool downloadMp3ToMemory(const String& fullUrl) {
 
     mp3Size = dechunkedSize;
 
-    Serial.print("Dechunked MP3 bytes: ");
-    Serial.println(mp3Size);
+    if (DEBUG_TIMING) {
+      Serial.print("Dechunked MP3 bytes: ");
+      Serial.println(mp3Size);
+    }
 
     printFirstBytes(mp3Bytes, mp3Size);
   }
@@ -1238,8 +1251,10 @@ void playAudioUrlFromResponse(const String& response) {
 
   unsigned long downloadEndMs = millis();
 
-  Serial.print("TIMING MP3 download+dechunk ms: ");
-  Serial.println(downloadEndMs - downloadStartMs);
+  if (DEBUG_TIMING) {
+    Serial.print("TIMING MP3 download+dechunk ms: ");
+    Serial.println(downloadEndMs - downloadStartMs);
+  }
 
   if (downloaded) {
     unsigned long playbackStartMs = millis();
@@ -1248,8 +1263,10 @@ void playAudioUrlFromResponse(const String& response) {
 
     unsigned long playbackEndMs = millis();
 
-    Serial.print("TIMING MP3 playback ms: ");
-    Serial.println(playbackEndMs - playbackStartMs);
+    if (DEBUG_TIMING) {
+      Serial.print("TIMING MP3 playback ms: ");
+      Serial.println(playbackEndMs - playbackStartMs);
+    }
   }
 }
 
@@ -1396,27 +1413,31 @@ bool uploadWavToApi() {
 
   http.end();
 
-  Serial.print("TIMING http.begin ms: ");
-  Serial.println(httpBeginEndMs - httpBeginStartMs);
+  if (DEBUG_TIMING) {
+    Serial.print("TIMING http.begin ms: ");
+    Serial.println(httpBeginEndMs - httpBeginStartMs);
 
-  Serial.print("TIMING multipart build ms: ");
-  Serial.println(multipartAllocEndMs - multipartAllocStartMs);
+    Serial.print("TIMING multipart build ms: ");
+    Serial.println(multipartAllocEndMs - multipartAllocStartMs);
 
-  Serial.print("TIMING POST upload+server wait ms: ");
-  Serial.println(postEndMs - postStartMs);
+    Serial.print("TIMING POST upload+server wait ms: ");
+    Serial.println(postEndMs - postStartMs);
 
-  Serial.print("TIMING read response ms: ");
-  Serial.println(readResponseEndMs - readResponseStartMs);
+    Serial.print("TIMING read response ms: ");
+    Serial.println(readResponseEndMs - readResponseStartMs);
 
-  Serial.print("TIMING upload function before playback ms: ");
-  Serial.println(readResponseEndMs - uploadStartMs);
+    Serial.print("TIMING upload function before playback ms: ");
+    Serial.println(readResponseEndMs - uploadStartMs);
+  }
 
   handleApiResponse(statusCode, response, "Voice query");
 
   unsigned long uploadEndMs = millis();
 
-  Serial.print("TIMING upload function total incl response audio playback ms: ");
-  Serial.println(uploadEndMs - uploadStartMs);
+  if (DEBUG_TIMING) {
+    Serial.print("TIMING upload function total incl response audio playback ms: ");
+    Serial.println(uploadEndMs - uploadStartMs);
+  }
 
   return statusCode >= 200 && statusCode < 300;
 }
@@ -1485,24 +1506,28 @@ bool sendNextStepToApi() {
 
   http.end();
 
-  Serial.print("TIMING next http.begin ms: ");
-  Serial.println(httpBeginEndMs - httpBeginStartMs);
+  if (DEBUG_TIMING) {
+    Serial.print("TIMING next http.begin ms: ");
+    Serial.println(httpBeginEndMs - httpBeginStartMs);
 
-  Serial.print("TIMING next POST+server wait ms: ");
-  Serial.println(postEndMs - postStartMs);
+    Serial.print("TIMING next POST+server wait ms: ");
+    Serial.println(postEndMs - postStartMs);
 
-  Serial.print("TIMING next read response ms: ");
-  Serial.println(responseEndMs - postEndMs);
+    Serial.print("TIMING next read response ms: ");
+    Serial.println(responseEndMs - postEndMs);
 
-  Serial.print("TIMING next before playback ms: ");
-  Serial.println(responseEndMs - nextStartMs);
+    Serial.print("TIMING next before playback ms: ");
+    Serial.println(responseEndMs - nextStartMs);
+  }
 
   handleApiResponse(statusCode, response, "next_step");
 
   unsigned long nextEndMs = millis();
 
-  Serial.print("TIMING next total incl response audio playback ms: ");
-  Serial.println(nextEndMs - nextStartMs);
+  if (DEBUG_TIMING) {
+    Serial.print("TIMING next total incl response audio playback ms: ");
+    Serial.println(nextEndMs - nextStartMs);
+  }
 
   return statusCode >= 200 && statusCode < 300;
 }
