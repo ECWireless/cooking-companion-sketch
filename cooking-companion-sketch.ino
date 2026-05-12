@@ -96,6 +96,10 @@ int currentStatus = STATUS_OFF;
 #define SPK_LRC_PIN  5
 #define SPK_DIN_PIN  6
 
+// Playback gain for the MAX98357A speaker path.
+// Try 0.90 or 1.00 if the enclosure is still too quiet and the audio stays clean.
+const float SPEAKER_PLAYBACK_GAIN = 0.75f;
+
 void parkSpeakerPins() {
   // Keep the MAX98357A inputs quiet until the I2S playback driver owns them.
   pinMode(SPK_BCLK_PIN, OUTPUT);
@@ -1179,8 +1183,7 @@ void playMp3FromMemory() {
 
   out->SetPinout(SPK_BCLK_PIN, SPK_LRC_PIN, SPK_DIN_PIN);
 
-  // Adjust if needed: 0.25 quieter, 0.50 louder.
-  out->SetGain(0.40);
+  out->SetGain(SPEAKER_PLAYBACK_GAIN);
 
   if (!mp3->begin(file, out)) {
     Serial.println("MP3 begin failed.");
