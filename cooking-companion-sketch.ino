@@ -96,6 +96,17 @@ int currentStatus = STATUS_OFF;
 #define SPK_LRC_PIN  5
 #define SPK_DIN_PIN  6
 
+void parkSpeakerPins() {
+  // Keep the MAX98357A inputs quiet until the I2S playback driver owns them.
+  pinMode(SPK_BCLK_PIN, OUTPUT);
+  pinMode(SPK_LRC_PIN, OUTPUT);
+  pinMode(SPK_DIN_PIN, OUTPUT);
+
+  digitalWrite(SPK_BCLK_PIN, LOW);
+  digitalWrite(SPK_LRC_PIN, LOW);
+  digitalWrite(SPK_DIN_PIN, LOW);
+}
+
 // =====================
 // Microphone / INMP441
 // =====================
@@ -1197,6 +1208,8 @@ void playMp3FromMemory() {
   delete mp3;
   delete out;
   delete file;
+
+  parkSpeakerPins();
 }
 
 void playAudioUrlFromResponse(const String& response) {
@@ -1497,6 +1510,7 @@ void setup() {
   pinMode(LED_R_PIN, OUTPUT);
   pinMode(LED_G_PIN, OUTPUT);
   pinMode(LED_B_PIN, OUTPUT);
+  parkSpeakerPins();
   setStatus(STATUS_BOOTING);
 
   delay(3000);
